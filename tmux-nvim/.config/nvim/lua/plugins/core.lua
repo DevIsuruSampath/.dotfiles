@@ -1,3 +1,5 @@
+local is_termux = (vim.env.PREFIX or ""):match("com.termux") ~= nil
+
 return {
   {
     "nvim-lua/plenary.nvim",
@@ -5,14 +7,18 @@ return {
   },
   {
     "nvim-treesitter/nvim-treesitter",
-    build = ":TSUpdate",
+    build = is_termux and nil or ":TSUpdate",
     opts = {
-      ensure_installed = { "bash", "lua", "markdown", "markdown_inline", "vim", "vimdoc", "json", "yaml" },
+      ensure_installed = is_termux and {} or { "bash", "lua", "markdown", "markdown_inline", "vim", "vimdoc", "json", "yaml" },
+      auto_install = not is_termux,
       highlight = { enable = true },
       indent = { enable = true },
     },
     config = function(_, opts)
-      require("nvim-treesitter.configs").setup(opts)
+      local ok, ts = pcall(require, "nvim-treesitter.configs")
+      if ok then
+        ts.setup(opts)
+      end
     end,
   },
   {

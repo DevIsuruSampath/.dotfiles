@@ -4,7 +4,12 @@ return {
     dependencies = { "nvim-treesitter/nvim-treesitter" },
     event = { "BufReadPre", "BufNewFile" },
     config = function()
-      require("nvim-treesitter.configs").setup({
+      local ok, ts = pcall(require, "nvim-treesitter.configs")
+      if not ok then
+        return
+      end
+
+      ts.setup({
         textobjects = {
           select = {
             enable = true,
