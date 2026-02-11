@@ -1,6 +1,9 @@
+local is_termux = (vim.env.PREFIX or ""):match("com.termux") ~= nil
+
 return {
   {
     "folke/noice.nvim",
+    enabled = not is_termux,
     event = "VeryLazy",
     dependencies = {
       "MunifTanjim/nui.nvim",
@@ -21,6 +24,7 @@ return {
   },
   {
     "rcarriga/nvim-notify",
+    enabled = not is_termux,
     opts = {
       timeout = 2500,
       background_colour = "#000000",
