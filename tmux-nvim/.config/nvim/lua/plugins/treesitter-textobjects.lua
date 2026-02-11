@@ -1,6 +1,9 @@
+local is_termux = (vim.env.PREFIX or ""):match("com.termux") ~= nil
+
 return {
   {
     "nvim-treesitter/nvim-treesitter-textobjects",
+    enabled = not is_termux,
     dependencies = { "nvim-treesitter/nvim-treesitter" },
     event = { "BufReadPre", "BufNewFile" },
     config = function()

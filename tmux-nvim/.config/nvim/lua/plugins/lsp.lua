@@ -1,3 +1,5 @@
+local is_termux = (vim.env.PREFIX or ""):match("com.termux") ~= nil
+
 return {
   {
     "williamboman/mason.nvim",
@@ -11,13 +13,13 @@ return {
       "neovim/nvim-lspconfig",
     },
     opts = {
-      ensure_installed = {
+      ensure_installed = is_termux and {} or {
         "lua_ls",
         "bashls",
         "jsonls",
         "yamlls",
       },
-      automatic_installation = true,
+      automatic_installation = not is_termux,
     },
   },
   {
@@ -34,13 +36,24 @@ return {
         capabilities = cmp_lsp.default_capabilities(capabilities)
       end
 
-      require("mason-lspconfig").setup_handlers({
-        function(server)
-          lspconfig[server].setup({
-            capabilities = capabilities,
-          })
-        end,
-      })
+      local ok_mason, mason_lsp = pcall(require, "mason-lspconfig")
+      local function setup_server(server)
+        if lspconfig[server] then
+          lspconfig[server].setup({ capabilities = capabilities })
+        end
+      end
+
+      if ok_mason and type(mason_lsp.setup_handlers) == "function" then
+        mason_lsp.setup_handlers({
+          function(server)
+            setup_server(server)
+          end,
+        })
+      else
+        for _, server in ipairs({ "lua_ls", "bashls", "jsonls", "yamlls" }) do
+          setup_server(server)
+        end
+      end
 
       vim.api.nvim_create_autocmd("LspAttach", {
         callback = function(ev)

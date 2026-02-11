@@ -7,10 +7,11 @@ return {
   },
   {
     "nvim-treesitter/nvim-treesitter",
-    build = is_termux and nil or ":TSUpdate",
+    enabled = not is_termux,
+    build = ":TSUpdate",
     opts = {
-      ensure_installed = is_termux and {} or { "bash", "lua", "markdown", "markdown_inline", "vim", "vimdoc", "json", "yaml" },
-      auto_install = not is_termux,
+      ensure_installed = { "bash", "lua", "markdown", "markdown_inline", "vim", "vimdoc", "json", "yaml" },
+      auto_install = true,
       highlight = { enable = true },
       indent = { enable = true },
     },
