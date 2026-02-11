@@ -5,7 +5,11 @@ local opt = vim.opt
 opt.number = true
 opt.relativenumber = true
 opt.mouse = "a"
-opt.clipboard = "unnamedplus"
+local is_termux = (vim.env.PREFIX or ""):match("com.termux") ~= nil
+
+if vim.fn.has("clipboard") == 1 and not is_termux then
+  opt.clipboard = "unnamedplus"
+end
 opt.breakindent = true
 opt.undofile = true
 opt.ignorecase = true
