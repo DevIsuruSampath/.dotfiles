@@ -8,7 +8,7 @@ return {
       quickfile = { enabled = true },
       statuscolumn = { enabled = true },
       picker = { enabled = true },
-      notifier = { enabled = true },
+      notifier = { enabled = false },
       input = { enabled = true },
       dashboard = { enabled = false },
       indent = { enabled = true },
