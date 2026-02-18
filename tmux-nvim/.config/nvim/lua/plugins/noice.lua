@@ -1,10 +1,8 @@
-local is_termux = (vim.env.PREFIX or ""):match("com.termux") ~= nil
-
+-- Removed the Termux check so plugins are ALWAYS enabled
 return {
   {
     "folke/noice.nvim",
     event = "VeryLazy",
-    enabled = not is_termux, -- DISABLE on Termux
     dependencies = {
       "MunifTanjim/nui.nvim",
       "rcarriga/nvim-notify",
@@ -20,19 +18,22 @@ return {
       },
       -- Presets help configure Noice for common setups
       presets = {
-        bottom_search = true,         -- use a classic bottom cmdline for search
-        command_palette = true,       -- position the cmdline and popupmenu together
+        bottom_search = false,        -- Set to FALSE to move search to center (optional)
+        command_palette = true,       -- TRUE: position the cmdline and popupmenu together
         long_message_to_split = true, -- long messages will be sent to a split
         inc_rename = false,           -- enables an input dialog for inc-rename.nvim
-        lsp_doc_border = false,       -- add a border to hover docs and signature help
+        lsp_doc_border = true,        -- add a border to hover docs and signature help
       },
     },
   },
   {
     "rcarriga/nvim-notify",
-    enabled = not is_termux, -- DISABLE on Termux
+    -- Removed "enabled = not is_termux" here too
     opts = {
       timeout = 3000,
+      background_colour = "#000000",
+      render = "minimal", -- 'minimal' or 'simple' is better for Termux than 'default'
+      stages = "static",  -- 'static' removes animation to prevent lag on phone
       max_height = function()
         return math.floor(vim.o.lines * 0.75)
       end,
