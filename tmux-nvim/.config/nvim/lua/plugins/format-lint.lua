@@ -1,32 +1,56 @@
 return {
+  -- 1. FORMATTING (Conform.nvim)
   {
     "stevearc/conform.nvim",
-    event = { "BufWritePre" },
+    event = { "BufReadPre", "BufNewFile" }, -- Load early to ready commands
     cmd = { "ConformInfo" },
+    keys = {
+      {
+        "<leader>mp",
+        function()
+          require("conform").format({ async = true, lsp_format = "fallback" })
+        end,
+        mode = "",
+        desc = "Format buffer",
+      },
+    },
     opts = {
       notify_on_error = true,
-      format_on_save = function(bufnr)
-        local disable_filetypes = { c = true, cpp = true }
-        local ft = vim.bo[bufnr].filetype
-        return {
-          timeout_ms = 500,
-          lsp_format = disable_filetypes[ft] and "never" or "fallback",
-        }
-      end,
+      -- Define formatters
       formatters_by_ft = {
         lua = { "stylua" },
         sh = { "shfmt" },
         bash = { "shfmt" },
         zsh = { "shfmt" },
+        -- Use Prettier for web/config files
         json = { "prettier" },
         yaml = { "prettier" },
         markdown = { "prettier" },
+        -- Fallback to sub-formatters if one is missing
+        ["_"] = { "trim_whitespace" },
       },
+      -- Format on Save logic
+      format_on_save = function(bufnr)
+        -- Disable auto-format for specific filetypes if needed
+        local disable_filetypes = { c = true, cpp = true }
+        local ft = vim.bo[bufnr].filetype
+        
+        if disable_filetypes[ft] then
+           return
+        end
+
+        return {
+          timeout_ms = 3000, -- Increased from 500ms to allow Prettier to run
+          lsp_format = "fallback", -- Use LSP if no formatter is available
+        }
+      end,
     },
   },
+
+  -- 2. LINTING (Nvim-lint)
   {
     "mfussenegger/nvim-lint",
-    event = { "BufReadPre", "BufNewFile", "BufWritePost" },
+    event = { "BufReadPre", "BufNewFile" },
     config = function()
       local lint = require("lint")
 
@@ -36,11 +60,19 @@ return {
         zsh = { "shellcheck" },
         markdown = { "markdownlint" },
         yaml = { "yamllint" },
+        json = { "jsonlint" },
       }
 
-      vim.api.nvim_create_autocmd({ "BufEnter", "BufWritePost", "InsertLeave" }, {
+      -- Create autocommand to trigger linting
+      local lint_augroup = vim.api.nvim_create_augroup("lint", { clear = true })
+
+      vim.api.nvim_create_autocmd({ "BufEnter", "BufWritePost", "InsertLeave", "TextChanged" }, {
+        group = lint_augroup,
         callback = function()
-          require("lint").try_lint()
+          -- Only lint if the buffer is a normal file
+          if vim.bo.buftype == "" then
+             lint.try_lint()
+          end
         end,
       })
     end,
