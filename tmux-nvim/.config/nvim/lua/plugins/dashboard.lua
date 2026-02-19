@@ -2,13 +2,16 @@ return {
   {
     "goolord/alpha-nvim",
     event = "VimEnter",
-    dependencies = { "nvim-tree/nvim-web-devicons" },
     config = function()
       local alpha = require("alpha")
       local dashboard = require("alpha.themes.dashboard")
 
-      -- 1. HEADER (ASCII ART)
-      -- Using a small logo that fits on mobile/Termux screens
+      -- FIX: Only show dashboard if Neovim is opened without a file
+      if vim.fn.argc() > 0 or vim.fn.line2byte("$") ~= -1 or vim.o.insertmode then
+        return
+      end
+
+      -- HEADER
       dashboard.section.header.val = {
         [[                                  ]],
         [[    ███╗   ██╗██╗   ██╗██╗███╗   ███╗ ]],
@@ -20,7 +23,7 @@ return {
         [[                                  ]],
       }
 
-      -- 2. BUTTONS
+      -- BUTTONS
       dashboard.section.buttons.val = {
         dashboard.button("f", "  Find File", ":Telescope find_files <CR>"),
         dashboard.button("n", "  New File", ":ene <BAR> startinsert <CR>"),
@@ -31,22 +34,26 @@ return {
         dashboard.button("q", "󰅚  Quit", ":qa<CR>"),
       }
 
-      -- 3. FOOTER (Plugin stats)
+      -- FOOTER
       local stats = require("lazy").stats()
       local ms = (math.floor(stats.startuptime * 100 + 0.5) / 100)
-      dashboard.section.footer.val = "⚡ Neovim loaded " .. stats.count .. " plugins in " .. ms .. "ms"
+      dashboard.section.footer.val = "⚡ " .. stats.count .. " plugins loaded in " .. ms .. "ms"
 
-      -- 4. APPLY THEME
-      -- Adding layout padding so it doesn't look cramped on your phone
-      dashboard.config.opts.noautocmd = true
       alpha.setup(dashboard.config)
 
-      -- Disable folding on the dashboard
-      vim.api.nvim_create_autocmd("FileType", {
-        pattern = "alpha",
+      -- FIX: Ensure UI elements like statusline don't mess up the look on mobile
+      vim.api.nvim_create_autocmd("User", {
+        pattern = "AlphaReady",
         callback = function()
-          vim.opt_local.laststatus = 0
-          vim.opt_local.showtabline = 0
+          vim.opt.laststatus = 0
+          vim.opt.showtabline = 0
+          vim.api.nvim_create_autocmd("BufUnload", {
+            buffer = 0,
+            callback = function()
+              vim.opt.laststatus = 3
+              vim.opt.showtabline = 2
+            end,
+          })
         end,
       })
     end,
