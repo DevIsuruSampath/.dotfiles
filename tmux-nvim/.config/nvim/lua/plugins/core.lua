@@ -21,7 +21,7 @@ return {
     opts = {
       ensure_installed = { 
         "bash", "lua", "markdown", "markdown_inline", 
-        "vim", "vimdoc", "json", "yaml" 
+        "vim", "vimdoc", "json", "yaml" , "python"
       },
       auto_install = not is_termux, -- Don't auto-compile on phone to save CPU
       highlight = { enable = true },
