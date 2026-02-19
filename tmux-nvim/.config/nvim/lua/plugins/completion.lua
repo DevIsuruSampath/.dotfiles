@@ -1,25 +1,21 @@
 return {
   {
     "L3MON4D3/LuaSnip",
-    build = "make install_jsregexp", -- Optional: install regex support if possible
+    build = "make install_jsregexp",
     dependencies = { "rafamadriz/friendly-snippets" },
     config = function()
       local ls = require("luasnip")
-
-      -- FIX: This configuration is required for jumping to work correctly
       ls.config.set_config({
-        history = true, -- Keep around last snippet local to jump back
-        updateevents = "TextChanged,TextChangedI", -- Update changes as you type
+        history = true,
+        updateevents = "TextChanged,TextChangedI",
         enable_autosnippets = true,
       })
-
-      -- Load VSCode-style snippets (from friendly-snippets)
       require("luasnip.loaders.from_vscode").lazy_load()
     end,
   },
   {
     "hrsh7th/nvim-cmp",
-    version = false, -- last release is way too old
+    version = false,
     event = "InsertEnter",
     dependencies = {
       "hrsh7th/cmp-nvim-lsp",
@@ -32,7 +28,6 @@ return {
       local cmp = require("cmp")
       local luasnip = require("luasnip")
 
-      -- Helper function for Tab completion
       local has_words_before = function()
         unpack = unpack or table.unpack
         local line, col = unpack(vim.api.nvim_win_get_cursor(0))
@@ -45,13 +40,20 @@ return {
             luasnip.lsp_expand(args.body)
           end,
         },
-        -- FIX: Add borders to make the menu distinct
+        -- FIX: Prevent the documentation from covering your entire screen
         window = {
           completion = cmp.config.window.bordered(),
-          documentation = cmp.config.window.bordered(),
+          documentation = cmp.config.window.bordered({
+            max_height = 12,
+            max_width = 40,
+          }),
         },
-        -- FIX: Add icons/formatting to the menu
+        -- FIX: Remove duplicates and limit the number of items for small screens
+        performance = {
+          max_view_entries = 12,
+        },
         formatting = {
+          fields = { "kind", "abbr", "menu" },
           format = function(entry, item)
             local icons = {
               Text = "", Method = "󰆧", Function = "󰊕", Constructor = "",
@@ -62,7 +64,14 @@ return {
               Constant = "󰏿", Struct = "", Event = "", Operator = "󰆕",
               TypeParameter = "󰅲",
             }
-            item.kind = string.format("%s %s", icons[item.kind] or "", item.kind)
+            item.kind = string.format("%s", icons[item.kind] or "")
+            
+            -- Truncate long labels so they don't bleed off the screen
+            local content = item.abbr
+            if #content > 25 then
+              item.abbr = string.sub(content, 1, 22) .. "..."
+            end
+
             item.menu = ({
               nvim_lsp = "[LSP]",
               luasnip = "[Snip]",
@@ -77,11 +86,7 @@ return {
           ["<C-f>"] = cmp.mapping.scroll_docs(4),
           ["<C-Space>"] = cmp.mapping.complete(),
           ["<C-e>"] = cmp.mapping.abort(),
-          
-          -- Accept currently selected item. If none selected, `select` first item.
-          -- Set `select` to `false` to only confirm explicitly selected items.
           ["<CR>"] = cmp.mapping.confirm({ select = true }), 
-
           ["<Tab>"] = cmp.mapping(function(fallback)
             if cmp.visible() then
               cmp.select_next_item()
@@ -93,7 +98,6 @@ return {
               fallback()
             end
           end, { "i", "s" }),
-
           ["<S-Tab>"] = cmp.mapping(function(fallback)
             if cmp.visible() then
               cmp.select_prev_item()
@@ -104,12 +108,14 @@ return {
             end
           end, { "i", "s" }),
         }),
+        -- FIX: Source sorting. LSP should always be on top.
         sources = cmp.config.sources({
-          { name = "nvim_lsp" },
-          { name = "luasnip" },
-          { name = "path" },
+          { name = "nvim_lsp", priority = 1000 },
+          { name = "luasnip", priority = 750 },
+          { name = "path", priority = 500 },
         }, {
-          { name = "buffer" },
+          -- Only show buffer results if no other matches exist (reduces clutter)
+          { name = "buffer", keyword_length = 3 },
         }),
       })
     end,
