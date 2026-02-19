@@ -1,46 +1,49 @@
 local is_termux = (vim.env.PREFIX or ""):match("com.termux") ~= nil
 
 return {
-  -- 1. PLENARY (Required utility)
+  -- 1. UTILITIES (Required by Telescope and Gitsigns)
   {
     "nvim-lua/plenary.nvim",
     lazy = true,
   },
 
-  -- 2. ICONS
+  -- 2. ICONS (Necessary for Lualine and Telescope UI)
   {
     "nvim-tree/nvim-web-devicons",
     lazy = true,
   },
 
-  -- 3. TREESITTER (Fixed module loading)
+  -- 3. SYNTAX HIGHLIGHTING (Treesitter)
   {
     "nvim-treesitter/nvim-treesitter",
     build = ":TSUpdate",
+    -- Load on buffer read to ensure immediate highlighting
     event = { "BufReadPost", "BufNewFile" },
     opts = {
+      -- Languages relevant to your web and bot projects
       ensure_installed = { 
         "bash", "lua", "markdown", "markdown_inline", 
-        "vim", "vimdoc", "json", "yaml" , "python"
+        "vim", "vimdoc", "json", "yaml", "python",
+        "javascript", "typescript", "tsx", "html", "css" 
       },
-      auto_install = not is_termux, -- Don't auto-compile on phone to save CPU
+      -- Safety for Termux: No auto-compiling in the background
+      auto_install = not is_termux, 
       highlight = { enable = true },
       indent = { enable = true },
     },
     config = function(_, opts)
-      -- FIX: Modern way to load Treesitter without calling nvim-treesitter.configs
-      -- Most modern versions of Treesitter prefer using the main module or direct setup
+      -- Fix for module loading errors on newer Neovim versions
       local ok, ts = pcall(require, "nvim-treesitter.configs")
       if ok then
-          ts.setup(opts)
+        ts.setup(opts)
       else
-          -- Fallback for newer versions where configs might be moved or handled differently
-          require("nvim-treesitter").setup(opts)
+        -- Fallback if the .configs module is unavailable
+        require("nvim-treesitter").setup(opts)
       end
     end,
   },
 
-  -- 4. TELESCOPE
+  -- 4. FUZZY FINDER (Telescope)
   {
     "nvim-telescope/telescope.nvim",
     cmd = "Telescope",
@@ -49,35 +52,59 @@ return {
       { "<leader>ff", "<cmd>Telescope find_files<cr>", desc = "Find files" },
       { "<leader>fg", "<cmd>Telescope live_grep<cr>", desc = "Live grep" },
       { "<leader>fb", "<cmd>Telescope buffers<cr>", desc = "Buffers" },
+      { "<leader>fr", "<cmd>Telescope oldfiles<cr>", desc = "Recent files" },
     },
-    opts = {},
+    opts = {
+      defaults = {
+        file_ignore_patterns = { "node_modules", ".git/" },
+        path_display = { "truncate" },
+      },
+    },
   },
 
-  -- 5. WHICH-KEY
+  -- 5. KEYBINDING HELPER (Which-Key)
   {
     "folke/which-key.nvim",
     event = "VeryLazy",
-    opts = {},
+    opts = {
+      preset = "modern",
+      spec = {
+        { "<leader>f", group = "file/find" },
+        { "<leader>g", group = "git" },
+        { "<leader>x", group = "diagnostics/trouble" },
+      },
+    },
   },
 
-  -- 6. GITSIGNS
+  -- 6. GIT SIGNS (Gutter integration)
   {
     "lewis6991/gitsigns.nvim",
     event = { "BufReadPre", "BufNewFile" },
-    opts = {},
+    opts = {
+      signs = {
+        add = { text = "▎" },
+        change = { text = "▎" },
+        delete = { text = "" },
+      },
+    },
   },
 
-  -- 7. LUALINE
+  -- 7. STATUS LINE (Lualine)
   {
     "nvim-lualine/lualine.nvim",
     event = "VeryLazy",
     dependencies = { "nvim-tree/nvim-web-devicons" },
     opts = {
-      options = { theme = "auto", globalstatus = true },
+      options = { 
+        theme = "tokyonight", -- Matches your syntax.lua theme
+        globalstatus = true,
+        component_separators = "|",
+        section_separators = "",
+      },
     },
   },
 
-  -- 8. TMUX NAVIGATOR
+  -- 8. NAVIGATION (Tmux integration)
   {
     "christoomey/vim-tmux-navigator",
     lazy = false,
