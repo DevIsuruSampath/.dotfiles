@@ -1,82 +1,63 @@
 return {
   {
     "folke/snacks.nvim",
-    priority = 1000, -- Load early to handle big files/notifications
+    priority = 1000,
     lazy = false,
     opts = {
       -- 1. UTILITIES
-      bigfile = { enabled = true }, -- Prevents freezing on large files
-      quickfile = { enabled = true }, -- Speeds up opening files without plugins
-      input = { enabled = true }, -- Better UI for "Rename" and input prompts
+      bigfile = { enabled = true },
+      quickfile = { enabled = true },
+      input = { enabled = true },
       
       -- 2. UI ELEMENTS
-      statuscolumn = { enabled = true }, -- Shows git signs/folds in the gutter
-      indent = { enabled = true }, -- Indent guides (replaces indent-blankline)
-      words = { enabled = true }, -- Highlights other usages of the word under cursor
+      statuscolumn = { enabled = true },
+      indent = { enabled = true },
+      words = { enabled = true },
       
       -- 3. MODULES
-      picker = { enabled = true }, -- The new Snacks Picker (Fast!)
-      dashboard = { enabled = false }, -- Disabled as requested (saves startup time)
+      picker = { enabled = true },
+      -- ENABLED: This allows Snacks to handle the dashboard if alpha-nvim is not used
+      dashboard = { 
+        enabled = true,
+        sections = {
+          { section = "header" },
+          { section = "keys", gap = 1, padding = 1 },
+          { section = "startup" },
+        },
+      },
       
       -- 4. CONFLICT HANDLING
-      -- Disabled because you are using 'rcarriga/nvim-notify' in noice.lua
-      notifier = { enabled = false }, 
-      scroll = { enabled = false }, -- Disabled to save battery/performance on mobile
+      notifier = { enabled = false }, -- Keep disabled as you use nvim-notify
+      scroll = { enabled = false },   -- Keep disabled for Termux performance
     },
     keys = {
       -- PICKER (File Finding)
-      { 
-        "<leader><space>", 
-        function() Snacks.picker.smart() end, 
-        desc = "Find Files (Smart)" 
-      },
-      { 
-        "<leader>/", 
-        function() Snacks.picker.grep() end, 
-        desc = "Grep (Search Text)" 
-      },
-      { 
-        "<leader>fb", 
-        function() Snacks.picker.buffers() end, 
-        desc = "Find Buffers" 
-      },
+      { "<leader><space>", function() Snacks.picker.smart() end, desc = "Smart Find" },
+      { "<leader>/", function() Snacks.picker.grep() end, desc = "Grep Search" },
+      { "<leader>fb", function() Snacks.picker.buffers() end, desc = "Buffers" },
+      { "<leader>ff", function() Snacks.picker.files() end, desc = "Find Files" },
 
       -- GIT UTILITIES
-      { 
-        "<leader>gB", 
-        function() Snacks.gitblame.line_at_cursor() end, 
-        desc = "Git Blame Line" 
-      },
-      { 
-        "<leader>gf", 
-        function() Snacks.lazygit.log_file() end, 
-        desc = "Lazygit Current File History" 
-      },
+      { "<leader>gB", function() Snacks.gitblame.line_at_cursor() end, desc = "Git Blame" },
+      { "<leader>gg", function() Snacks.lazygit() end, desc = "Lazygit" },
 
-      -- OTHER UTILITIES (Crucial for Mobile)
-      { 
-        "<leader>z", 
-        function() Snacks.zen.zoom() end, 
-        desc = "Toggle Zoom (Maximize Window)" 
-      },
-      { 
-        "<leader>bd", 
-        function() Snacks.bufdelete() end, 
-        desc = "Delete Buffer" 
-      },
-      { 
-        "<leader>rf", 
-        function() Snacks.rename.rename_file() end, 
-        desc = "Rename File" 
-      },
+      -- MOBILE OPTIMIZED UTILS
+      { "<leader>z",  function() Snacks.zen.zoom() end, desc = "Zoom Window" },
+      { "<leader>bd", function() Snacks.bufdelete() end, desc = "Delete Buffer" },
+      { "<leader>rf", function() Snacks.rename.rename_file() end, desc = "Rename File" },
+      { "<leader>un", function() Snacks.notifier.hide() end, desc = "Dismiss Notify" },
     },
     init = function()
-      -- Create the global Snacks object + Toggle mappings
       vim.api.nvim_create_autocmd("User", {
         pattern = "VeryLazy",
         callback = function()
-          -- Add a toggle for the word highlighter
-          Snacks.toggle.words():map("<leader>uw")
+          -- Setup Toggles
+          Snacks.toggle.option("spell", { name = "Spelling" }):map("<leader>us")
+          Snacks.toggle.option("wrap", { name = "Wrap" }):map("<leader>uw")
+          Snacks.toggle.line_number():map("<leader>ul")
+          Snacks.toggle.diagnostics():map("<leader>ud")
+          Snacks.toggle.treesitter():map("<leader>uT")
+          Snacks.toggle.inlay_hints():map("<leader>uh")
         end,
       })
     end,
